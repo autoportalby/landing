@@ -1,0 +1,104 @@
+@import "tailwindcss";
+
+/*
+ * vrum.by design tokens -> Tailwind v4 theme.
+ *
+ * Registering tokens under Tailwind's theme namespaces (--color-*, --radius-*,
+ * --shadow-*, --font-*, --container-*) makes utility classes resolve to the
+ * exact token values (e.g. `bg-blue`, `text-ink-2`, `rounded-lg`, `shadow-2`,
+ * `font-display`, `max-w-wrap`). Tailwind also emits each of these as a CSS
+ * custom property, and the aliases in the trailing @theme block expose the
+ * original short token names (`--blue`, `--r`, `--sh-1`, `--ff`, `--wrap`, ...)
+ * so hand-written CSS using `var(--blue)` keeps working.
+ */
+@theme {
+  /* Colors */
+  --color-blue: #1e5bff;
+  --color-blue-ink: #0b3fcc;
+  --color-blue-tint: #eaf0ff;
+  --color-blue-tint-2: #dde7ff;
+  --color-ink: #0e1726;
+  --color-ink-2: #51607a;
+  --color-ink-3: #8a94a6;
+  --color-line: #e7eaef;
+  --color-line-2: #eef0f4;
+  --color-green: #0fb36b;
+  --color-green-tint: #e5f7ef;
+  --color-amber: #e69200;
+  --color-amber-bg: #f6a609;
+  --color-amber-tint: #fff3de;
+  --color-surface: #ffffff;
+  --color-surface-2: #f1f3f7;
+
+  /* Radii */
+  --radius-lg: 24px;
+  --radius-r: 18px;
+  --radius-pill: 999px;
+
+  /* Shadows */
+  --shadow-1: 0 1px 2px rgba(16, 23, 38, 0.05);
+  --shadow-2: 0 2px 8px rgba(16, 23, 38, 0.05), 0 14px 34px rgba(16, 23, 38, 0.08);
+  --shadow-3: 0 20px 50px rgba(16, 23, 38, 0.14), 0 40px 90px rgba(16, 23, 38, 0.14);
+
+  /* Fonts (variables injected by next/font in layout.tsx) */
+  --font-sans:
+    var(--font-manrope), "Manrope", -apple-system, system-ui, sans-serif;
+  --font-display:
+    var(--font-unbounded), "Unbounded", "Manrope", sans-serif;
+
+  /* Layout: `max-w-wrap` == 1140px content wrapper */
+  --container-wrap: 1140px;
+}
+
+/*
+ * Original short token names, kept as aliases so raw CSS that references
+ * var(--blue), var(--r), var(--sh-2), var(--ff), var(--wrap), etc. still works.
+ */
+@theme {
+  --blue: var(--color-blue);
+  --blue-ink: var(--color-blue-ink);
+  --blue-tint: var(--color-blue-tint);
+  --blue-tint-2: var(--color-blue-tint-2);
+  --ink: var(--color-ink);
+  --ink-2: var(--color-ink-2);
+  --ink-3: var(--color-ink-3);
+  --line: var(--color-line);
+  --line-2: var(--color-line-2);
+  --green: var(--color-green);
+  --green-tint: var(--color-green-tint);
+  --amber: var(--color-amber);
+  --amber-bg: var(--color-amber-bg);
+  --amber-tint: var(--color-amber-tint);
+  --surface: var(--color-surface);
+  --surface-2: var(--color-surface-2);
+
+  --r-lg: var(--radius-lg);
+  --r: var(--radius-r);
+  --pill: var(--radius-pill);
+
+  --sh-1: var(--shadow-1);
+  --sh-2: var(--shadow-2);
+  --sh-3: var(--shadow-3);
+
+  --ff: var(--font-sans);
+  --fd: var(--font-display);
+
+  --wrap: var(--container-wrap);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  line-height: 1.55;
+  font-variant-numeric: tabular-nums;
+}

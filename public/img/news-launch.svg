@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 150" fill="none" role="img" aria-label="vrum.by">
+  <defs>
+    <linearGradient id="vrum-news-g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3D72FF"/>
+      <stop offset="1" stop-color="#0B3FCC"/>
+    </linearGradient>
+  </defs>
+  <rect width="240" height="150" fill="url(#vrum-news-g)"/>
+  <g transform="translate(120 75) scale(4.2) translate(-12 -12)">
+    <path d="M12 3 14 10 21 12 14 14 12 21 10 14 3 12 10 10z" fill="#fff"/>
+  </g>
+</svg>

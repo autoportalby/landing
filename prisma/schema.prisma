@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  // Runtime (pooled on Supabase — append ?pgbouncer=true&connection_limit=1).
+  url       = env("DATABASE_URL")
+  // Migrations need a direct (non-pooled) connection; falls back to DATABASE_URL locally.
+  directUrl = env("DIRECT_URL")
+}
+
+model Subscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  source    String?
+  createdAt DateTime @default(now())
+}
+
+model Vote {
+  id        String   @id @default(cuid())
+  optionKey String
+  createdAt DateTime @default(now())
+}
+
+enum PostKind {
+  article
+  news
+}
+
+enum PostStatus {
+  draft
+  archived
+  published
+}
+
+model Post {
+  id             String     @id @default(cuid())
+  slug           String     @unique
+  kind           PostKind
+  status         PostStatus @default(published)
+  pinned         Boolean    @default(false)
+  category       String
+  categoryColor  String
+  title          String
+  excerpt        String
+  coverImage     String?
+  readingMin     Int?
+  feedTag        String
+  publishedAt    DateTime
+  updatedAt      DateTime?
+  seoTitle       String
+  seoDescription String
+  ogImage        String?
+  body           Json
+  createdAt      DateTime   @default(now())
+
+  @@index([status, pinned, publishedAt])
+}
