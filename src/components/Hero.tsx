@@ -1,6 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef } from "react";
+
+import { markSubscribed, useSubscribe, waitingText } from "@/lib/use-subscribe";
 
 /**
  * Hero — pixel-faithful reproduction of the vrum.by landing "Hero" section.
@@ -16,7 +18,7 @@ import { useRef, useState } from "react";
  * toggles the local success state (spec: TODO for Formspree/Tally/Mailchimp).
  */
 export default function Hero() {
-  const [done, setDone] = useState(false);
+  const { subscribed, count } = useSubscribe();
   const inputRef = useRef<HTMLInputElement>(null);
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -27,16 +29,8 @@ export default function Hero() {
       input?.reportValidity();
       return;
     }
-    // Optimistic UI: flip to the success state immediately, then persist the
-    // subscription in the background (POST /api/subscribe). Failures are logged
-    // but do not roll the UI back — the spec always confirms to the visitor.
-    const email = input.value;
-    setDone(true);
-    void fetch("/api/subscribe", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, source: "hero" }),
-    }).catch((err) => console.error("subscribe failed", err));
+    // Shared optimistic subscribe: flips every form to success + persists.
+    markSubscribed(input.value, "hero");
   }
 
   return (
@@ -110,7 +104,7 @@ export default function Hero() {
 
             {/* Notify wrap: form + success + privacy */}
             <div className="relative mt-7 w-full max-w-[520px]">
-              {!done ? (
+              {!subscribed ? (
                 <form
                   onSubmit={onSubmit}
                   noValidate
@@ -141,26 +135,33 @@ export default function Hero() {
                 <div
                   role="status"
                   aria-live="polite"
-                  className="flex items-center gap-2.5 rounded-[14px] border border-green-tint bg-green-tint px-4 py-[15px] text-[15px] font-bold text-ink max-[860px]:justify-center"
+                  className="rounded-[14px] border border-green-tint bg-green-tint px-4 py-[15px] max-[860px]:text-center"
                 >
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    aria-hidden="true"
-                    className="shrink-0"
-                  >
-                    <circle cx="12" cy="12" r="10" fill="var(--green)" />
-                    <path
-                      d="M7.5 12.5l3 3 6-6.5"
-                      stroke="#fff"
-                      strokeWidth="2.2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  Готово! Напишем, как только откроемся.
+                  <p className="flex items-center gap-2.5 text-[15px] font-bold text-ink max-[860px]:justify-center">
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      aria-hidden="true"
+                      className="shrink-0"
+                    >
+                      <circle cx="12" cy="12" r="10" fill="var(--green)" />
+                      <path
+                        d="M7.5 12.5l3 3 6-6.5"
+                        stroke="#fff"
+                        strokeWidth="2.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    Готово! Напишем, как только откроемся.
+                  </p>
+                  {count != null && count > 0 && (
+                    <p className="mt-1.5 text-[13.5px] font-semibold text-ink-2">
+                      {waitingText(count)}
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -180,7 +181,7 @@ export default function Hero() {
           {/* ── Right column: phone mockup ──────────────────────────────── */}
           <div
             data-reveal
-            className="relative flex items-center justify-right max-[380px]:scale-90"
+            className="relative flex items-center justify-end max-[860px]:justify-center max-[380px]:scale-90"
           >
             {/* mock-stage::before — soft radial glow behind the device */}
             <div

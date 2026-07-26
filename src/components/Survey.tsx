@@ -114,8 +114,8 @@ const OPTIONS: Option[] = [
     label: "бесплатную подачу объявлений",
     icon: (
       <svg {...iconProps}>
-        <rect x="4" y="4" width="16" height="16" rx="3.5" stroke="currentColor" stroke-width="2" />
-        <path d="M12 8.5v7M8.5 12h7" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        <rect x="4" y="4" width="16" height="16" rx="3.5" stroke="currentColor" strokeWidth="2" />
+        <path d="M12 8.5v7M8.5 12h7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
       </svg>
     ),
   },
@@ -135,7 +135,16 @@ const OPTIONS: Option[] = [
   },
 ];
 
-const SUCCESS_TEXT = "Готово! Напишем, как только откроемся.";
+// Client-side "already voted" marker. The server also sets an HttpOnly dedupe
+// cookie, but JS can't read that, so we remember the choice here to restore the
+// results state on reload (and stop showing the poll again).
+const VOTE_STORE = "vrum_vote";
+const OPTION_BY_KEY = Object.fromEntries(
+  OPTIONS.map((o) => [o.key, o]),
+) as Record<string, Option>;
+
+type Tally = { optionKey: SurveyOptionKey; count: number };
+type Results = { total: number; tallies: Tally[] };
 
 function CheckIcon({ className }: { className?: string }) {
   return (
@@ -160,11 +169,41 @@ export default function Survey() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [echo, setEcho] = useState("это");
   const [submitted, setSubmitted] = useState(false);
-  const [notifyDone, setNotifyDone] = useState(false);
+  const [results, setResults] = useState<Results | null>(null);
 
   const cardRef = useRef<HTMLDivElement>(null);
-  const emailRef = useRef<HTMLInputElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Fetch the current tally across all users (GET /api/vote).
+  function loadResults() {
+    void fetch("/api/vote")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.ok) setResults({ total: d.total, tallies: d.tallies });
+      })
+      .catch(() => {});
+  }
+
+  // On mount: if this browser already voted, restore the results state instead
+  // of showing the poll again.
+  useEffect(() => {
+    let voted: string | null = null;
+    try {
+      voted = localStorage.getItem(VOTE_STORE);
+    } catch {}
+    const opt = voted ? OPTION_BY_KEY[voted] : undefined;
+    if (opt) {
+      /* eslint-disable react-hooks/set-state-in-effect --
+         Hydration-safe restore: localStorage is a client-only external system
+         unavailable during SSR, so the "already voted" state must be seeded
+         here (not in a lazy initializer, which would run on the server). */
+      setSelectedId(opt.id);
+      setEcho(opt.label);
+      setSubmitted(true);
+      /* eslint-enable react-hooks/set-state-in-effect */
+      loadResults();
+    }
+  }, []);
 
   // Scroll reveal: position-only, content always opaque (fail-safe).
   useEffect(() => {
@@ -209,34 +248,22 @@ export default function Survey() {
     // (POST /api/vote). A failed request is logged but never rolls back the UI.
     setSelectedId(opt.id);
     setEcho(opt.label);
+    // Remember locally so a reload restores the results state (see mount effect).
+    try {
+      localStorage.setItem(VOTE_STORE, opt.key);
+    } catch {}
     void fetch("/api/vote", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ optionKey: opt.key }),
-    }).catch((err) => console.error("vote failed", err));
+    })
+      .catch((err) => console.error("vote failed", err))
+      // Load the tally once the vote is counted so it includes this vote.
+      .finally(() => loadResults());
     // Analytics goal/event (no-op unless YM/GA IDs are configured).
     track("vote", { optionKey: opt.key });
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => setSubmitted(true), 320);
-  }
-
-  function onNotifySubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const input = emailRef.current;
-    if (!input || !input.checkValidity()) {
-      input?.focus();
-      input?.reportValidity();
-      return;
-    }
-    // Optimistic UI: confirm immediately, then persist in the background
-    // (POST /api/subscribe, tagged with the survey source).
-    const email = input.value;
-    setNotifyDone(true);
-    void fetch("/api/subscribe", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, source: "survey" }),
-    }).catch((err) => console.error("subscribe failed", err));
   }
 
   return (
@@ -388,50 +415,70 @@ export default function Survey() {
                 <span id="surveyEcho" className="font-bold text-ink">
                   {echo}
                 </span>{" "}
-                в первую очередь. Оставьте email — сообщим о запуске.
+                в первую очередь.
               </p>
 
-              <div className="notify-wrap mx-auto mt-6 max-w-[440px]">
-                {!notifyDone ? (
-                  <form
-                    className="notify flex gap-2.5 max-[540px]:flex-col"
-                    onSubmit={onNotifySubmit}
-                    noValidate
-                  >
-                    <label htmlFor="survey-email" className="sr-only">
-                      Ваш email
-                    </label>
-                    <input
-                      ref={emailRef}
-                      id="survey-email"
-                      type="email"
-                      name="email"
-                      required
-                      autoComplete="email"
-                      placeholder="Ваш email"
-                      aria-label="Ваш email"
-                      className="min-h-[52px] w-full flex-1 rounded-[14px] border border-line bg-surface px-4 text-[15.5px] text-ink shadow-1 outline-none placeholder:text-ink-3 focus:border-blue"
-                    />
-                    <button
-                      type="submit"
-                      className="inline-flex min-h-[52px] items-center justify-center gap-2.5 rounded-[14px] bg-blue px-6 text-[15.5px] font-extrabold whitespace-nowrap text-white transition-transform hover:-translate-y-px max-[540px]:w-full"
-                      style={{ boxShadow: "0 10px 24px rgba(30,91,255,.32)" }}
-                    >
-                      Сообщить о запуске
-                    </button>
-                  </form>
+              {/* Live distribution of votes across all users */}
+              <div className="mx-auto mt-7 max-w-[460px] text-left">
+                <p className="mb-3 text-center text-[12.5px] font-extrabold tracking-[1px] text-ink-3 uppercase">
+                  Как отвечают другие
+                </p>
+                {results ? (
+                  <>
+                    <ul className="m-0 flex list-none flex-col gap-3 p-0">
+                      {[...results.tallies]
+                        .sort(
+                          (a, b) =>
+                            b.count - a.count ||
+                            OPTIONS.findIndex((o) => o.key === a.optionKey) -
+                              OPTIONS.findIndex((o) => o.key === b.optionKey),
+                        )
+                        .map((t) => {
+                          const o = OPTION_BY_KEY[t.optionKey];
+                          if (!o) return null;
+                          const pct = results.total
+                            ? Math.round((t.count / results.total) * 100)
+                            : 0;
+                          const mine = selectedId === o.id;
+                          const color = ACCENT[o.accent].color;
+                          return (
+                            <li key={t.optionKey}>
+                              <div className="flex items-baseline justify-between gap-3 text-[13.5px]">
+                                <span
+                                  className={
+                                    mine
+                                      ? "font-extrabold text-ink"
+                                      : "font-semibold text-ink-2"
+                                  }
+                                >
+                                  {o.title}
+                                  {mine && (
+                                    <span className="ml-1.5 text-[11px] font-bold text-blue">
+                                      · ваш выбор
+                                    </span>
+                                  )}
+                                </span>
+                                <span className="font-extrabold tabular-nums text-ink">
+                                  {pct}%
+                                </span>
+                              </div>
+                              <div className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-surface-2">
+                                <div
+                                  className="h-full rounded-full transition-[width] duration-500 ease-out"
+                                  style={{ width: `${pct}%`, background: color }}
+                                />
+                              </div>
+                            </li>
+                          );
+                        })}
+                    </ul>
+                    <p className="mt-3 text-center text-[12.5px] font-semibold text-ink-3">
+                      Всего голосов: {results.total}
+                    </p>
+                  </>
                 ) : (
-                  <p
-                    className="notify-ok show flex items-center justify-center gap-2 font-semibold text-green"
-                    role="status"
-                  >
-                    <span
-                      className="flex h-6 w-6 flex-none items-center justify-center rounded-full text-white"
-                      style={{ background: "var(--green)" }}
-                    >
-                      <CheckIcon />
-                    </span>
-                    {SUCCESS_TEXT}
+                  <p className="text-center text-[13.5px] font-medium text-ink-3">
+                    Загружаем результаты…
                   </p>
                 )}
               </div>

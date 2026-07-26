@@ -1,6 +1,8 @@
 "use client";
 
-import { useRef, useState, type FormEvent } from "react";
+import { useRef, type FormEvent } from "react";
+
+import { markSubscribed, useSubscribe, waitingText } from "@/lib/use-subscribe";
 
 /**
  * Final CTA (id="notify") — the shared scroll target for every
@@ -11,7 +13,7 @@ import { useRef, useState, type FormEvent } from "react";
  */
 export default function FinalCta() {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [done, setDone] = useState(false);
+  const { subscribed, count } = useSubscribe();
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -25,15 +27,8 @@ export default function FinalCta() {
       return;
     }
 
-    // Optimistic UI: confirm immediately, then persist in the background
-    // (POST /api/subscribe). Failures are logged but the UI stays confirmed.
-    const email = input.value;
-    setDone(true);
-    void fetch("/api/subscribe", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, source: "final" }),
-    }).catch((err) => console.error("subscribe failed", err));
+    // Shared optimistic subscribe: flips every form to success + persists.
+    markSubscribed(input.value, "final");
   }
 
   return (
@@ -64,30 +59,33 @@ export default function FinalCta() {
         </p>
 
         <div className="mt-8 w-full max-w-[520px]">
-          {done ? (
-            <p
-              role="status"
-              aria-live="polite"
-              className="flex items-center justify-center gap-2.5 font-bold text-white"
-            >
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                aria-hidden="true"
-                className="shrink-0"
-              >
-                <path
-                  d="M20 6 9 17l-5-5"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              Готово! Напишем, как только откроемся.
-            </p>
+          {subscribed ? (
+            <div role="status" aria-live="polite">
+              <p className="flex items-center justify-center gap-2.5 font-bold text-white">
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                  className="shrink-0"
+                >
+                  <path
+                    d="M20 6 9 17l-5-5"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                Готово! Напишем, как только откроемся.
+              </p>
+              {count != null && count > 0 && (
+                <p className="mt-2 text-[14px] font-semibold text-white/80">
+                  {waitingText(count)}
+                </p>
+              )}
+            </div>
           ) : (
             <form
               noValidate

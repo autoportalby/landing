@@ -5,6 +5,16 @@ import type { NextConfig } from "next";
 // policy later. Everything else is locked to same-origin (+ data: for inline
 // SVG/font data URIs). No external origins are used (fonts are self-hosted via
 // next/font, images live under /public).
+// React's dev runtime uses eval() for debugging (never in production), so the
+// dev CSP must allow 'unsafe-eval'. Production stays strict without it.
+const scriptSrc = [
+  "script-src 'self' 'unsafe-inline'",
+  process.env.NODE_ENV !== "production" ? "'unsafe-eval'" : "",
+  "https://mc.yandex.ru https://www.googletagmanager.com",
+]
+  .filter(Boolean)
+  .join(" ");
+
 const csp = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -13,7 +23,7 @@ const csp = [
   "frame-src https://mc.yandex.ru",
   "img-src 'self' data: https://mc.yandex.ru https://www.google-analytics.com",
   "style-src 'self' 'unsafe-inline'",
-  "script-src 'self' 'unsafe-inline' https://mc.yandex.ru https://www.googletagmanager.com",
+  scriptSrc,
   "font-src 'self' data:",
   "connect-src 'self' https://mc.yandex.ru https://www.google-analytics.com https://*.google-analytics.com https://www.googletagmanager.com",
   "form-action 'self'",
