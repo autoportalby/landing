@@ -3,6 +3,7 @@ import { Manrope, Unbounded } from "next/font/google";
 import "./globals.css";
 
 import Analytics from "@/components/Analytics";
+import { Analytics as VercelAnalytics } from "@vercel/analytics/next";
 
 // Body font -> exposed as --font-manrope, consumed by --font-sans (--ff)
 const manrope = Manrope({
@@ -84,6 +85,7 @@ export default function RootLayout({
         />
         {children}
         <Analytics />
+        <VercelAnalytics />
       </body>
     </html>
   );
