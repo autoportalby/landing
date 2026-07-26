@@ -34,6 +34,7 @@ export const newsPosts: Prisma.PostCreateInput[] = [
   },
   {
     slug: "novost-2",
+    status: "draft",
     kind: "news",
     category: "Новость",
     categoryColor: "var(--blue)",
@@ -65,6 +66,7 @@ export const newsPosts: Prisma.PostCreateInput[] = [
   },
   {
     slug: "novost-3",
+    status: "draft",
     kind: "news",
     category: "Новость",
     categoryColor: "var(--blue)",
@@ -96,6 +98,7 @@ export const newsPosts: Prisma.PostCreateInput[] = [
   },
   {
     slug: "novost-4",
+    status: "draft",
     kind: "news",
     category: "Новость",
     categoryColor: "var(--blue)",
@@ -127,6 +130,7 @@ export const newsPosts: Prisma.PostCreateInput[] = [
   },
   {
     slug: "novost-5",
+    status: "draft",
     kind: "news",
     category: "Новость",
     categoryColor: "var(--blue)",
