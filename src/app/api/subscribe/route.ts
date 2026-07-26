@@ -60,3 +60,14 @@ export async function POST(request: NextRequest) {
 
   return Response.json({ ok: true });
 }
+
+// Public subscriber count — powers the "N человек уже ждут запуска" line.
+export async function GET() {
+  try {
+    const count = await prisma.subscriber.count();
+    return Response.json({ ok: true, count });
+  } catch (err) {
+    console.error("subscriber count failed", err);
+    return Response.json({ ok: false, error: "server_error" }, { status: 500 });
+  }
+}
