@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
@@ -42,12 +43,13 @@ function NewsCard({ post }: { post: PostListItem }) {
     >
       <div className="relative aspect-[16/10] w-full flex-none overflow-hidden bg-surface-2 min-[721px]:w-[240px]">
         {post.coverImage ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={post.coverImage}
             alt={post.title}
-            loading="lazy"
-            className="h-full w-full object-cover"
+            fill
+            sizes="(min-width:721px) 240px, 100vw"
+            unoptimized={post.coverImage.endsWith(".svg")}
+            className="object-cover"
           />
         ) : (
           <div className="grid h-full w-full place-items-center bg-[linear-gradient(150deg,#2D63FF,#0B3FCC)]">

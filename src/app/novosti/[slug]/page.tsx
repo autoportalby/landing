@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import Nav from "@/components/Nav";
@@ -110,12 +111,15 @@ export default async function PostPage({
         </nav>
 
         {post.coverImage ? (
-          <div className="mb-1.5 mt-[22px] aspect-[16/6] overflow-hidden rounded-[20px] border border-line-2 bg-surface-2 max-[560px]:aspect-[16/9]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+          <div className="relative mb-1.5 mt-[22px] aspect-[16/6] overflow-hidden rounded-[20px] border border-line-2 bg-surface-2 max-[560px]:aspect-[16/9]">
+            <Image
               src={post.coverImage}
               alt={post.title}
-              className="h-full w-full object-cover"
+              fill
+              priority
+              sizes="(min-width:768px) 760px, 100vw"
+              unoptimized={post.coverImage.endsWith(".svg")}
+              className="object-cover"
             />
           </div>
         ) : null}
