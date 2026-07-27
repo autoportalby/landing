@@ -11,6 +11,8 @@
  * guarded by prefers-reduced-motion.
  */
 
+import Image from "next/image";
+
 type Guide = {
   href: string;
   img: string;
@@ -117,13 +119,13 @@ export default function Guides() {
               className="guide group flex flex-col overflow-hidden rounded-lg border border-line bg-surface shadow-1 focus-visible:outline focus-visible:outline-[2.5px] focus-visible:outline-offset-[3px] focus-visible:outline-blue"
               data-reveal
             >
-              <div className="aspect-[16/10] overflow-hidden bg-surface-2">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+              <div className="relative aspect-[16/10] overflow-hidden bg-surface-2">
+                <Image
                   src={g.img}
                   alt={g.alt}
-                  loading="lazy"
-                  className="h-full w-full object-cover"
+                  fill
+                  sizes="(min-width:920px) 25vw, (min-width:520px) 50vw, 100vw"
+                  className="object-cover"
                 />
               </div>
               <div className="flex flex-col p-5">
