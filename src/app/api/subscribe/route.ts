@@ -41,10 +41,10 @@ export async function POST(request: NextRequest) {
     return Response.json({ ok: false, error: "invalid_input" }, { status: 400 });
   }
 
-  const { email, source } = parsed.data;
+  const { email, source, note } = parsed.data;
 
   try {
-    await prisma.subscriber.create({ data: { email, source } });
+    await prisma.subscriber.create({ data: { email, source, note } });
   } catch (err) {
     // Duplicate email hits the unique constraint (P2002). This is expected and
     // idempotent from the caller's perspective, so we treat it as success.
