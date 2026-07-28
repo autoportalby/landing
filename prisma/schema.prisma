@@ -14,6 +14,8 @@ model Subscriber {
   id        String   @id @default(cuid())
   email     String   @unique
   source    String?
+  // Free-text "wanted car" request captured on the 404 search (source "404").
+  note      String?
   createdAt DateTime @default(now())
 }
 

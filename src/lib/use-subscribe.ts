@@ -16,12 +16,14 @@ import { useSyncExternalStore } from "react";
 
 const STORE_KEY = "vrum_subscribed";
 
-type State = { subscribed: boolean; count: number | null };
+// `ready` = localStorage has been read on the client. Until then consumers
+// shouldn't decide between the form and the success state (avoids a flash).
+type State = { subscribed: boolean; count: number | null; ready: boolean };
 
 // Client store. getServerSnapshot returns a constant so SSR/hydration always
-// render the form (never a mismatched success state).
-const SERVER_STATE: State = { subscribed: false, count: null };
-let state: State = { subscribed: false, count: null };
+// render the pre-check state (never a mismatched success state).
+const SERVER_STATE: State = { subscribed: false, count: null, ready: false };
+let state: State = { subscribed: false, count: null, ready: false };
 
 const listeners = new Set<() => void>();
 
@@ -47,9 +49,11 @@ let initialized = false;
 function init() {
   if (initialized || typeof window === "undefined") return;
   initialized = true;
+  let sub = false;
   try {
-    if (localStorage.getItem(STORE_KEY) === "1") state = { ...state, subscribed: true };
+    sub = localStorage.getItem(STORE_KEY) === "1";
   } catch {}
+  setState({ subscribed: sub, ready: true });
   fetchCount();
   // Cross-tab: reflect a subscription made in another tab.
   window.addEventListener("storage", (e) => {
@@ -62,7 +66,7 @@ function init() {
  * marker, POST it, then refresh the real count. Failures are logged but never
  * roll the UI back (matches the existing optimistic-confirm behaviour).
  */
-export function markSubscribed(email: string, source: string) {
+export function markSubscribed(email: string, source: string, note?: string) {
   try {
     localStorage.setItem(STORE_KEY, "1");
   } catch {}
@@ -73,7 +77,7 @@ export function markSubscribed(email: string, source: string) {
   void fetch("/api/subscribe", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, source }),
+    body: JSON.stringify(note ? { email, source, note } : { email, source }),
   })
     .catch((err) => console.error("subscribe failed", err))
     // Reconcile with the server (handles dedupe: a repeat email won't bump it).

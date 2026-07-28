@@ -29,6 +29,8 @@ export type SurveyOptionKey = (typeof SURVEY_OPTION_KEYS)[number];
 export const subscribeSchema = z.object({
   email: z.email().trim().toLowerCase().max(320),
   source: z.string().trim().max(120).optional(),
+  // Optional free-text request (e.g. the 404 "wanted car" search query).
+  note: z.string().trim().max(200).optional(),
 });
 
 export type SubscribeInput = z.infer<typeof subscribeSchema>;
