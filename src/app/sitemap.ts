@@ -1,22 +1,20 @@
 import type { MetadataRoute } from "next";
 
-import { prisma } from "@/lib/prisma";
+import { listPublishedIndex } from "@/lib/posts";
 
 const BASE = "https://vrum.by";
 
-// Query the DB per request (not baked at build) so the sitemap stays correct
-// even if the build host can't reach the database and reflects new posts.
+// Built per request, not baked into the build: a build host that cannot reach the
+// admin API still deploys, and newly published material appears without a
+// redeploy. An unreachable API yields the two static entries rather than an error.
 export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const posts = await prisma.post.findMany({
-    select: { slug: true, publishedAt: true },
-    orderBy: { publishedAt: "desc" },
-  });
+  const posts = await listPublishedIndex();
 
   const postEntries: MetadataRoute.Sitemap = posts.map((p) => ({
     url: `${BASE}/novosti/${p.slug}`,
-    lastModified: p.publishedAt,
+    lastModified: p.updatedAt ?? p.publishedAt ?? undefined,
     changeFrequency: "monthly",
     priority: 0.7,
   }));

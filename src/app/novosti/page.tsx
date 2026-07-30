@@ -106,7 +106,7 @@ export default async function NovostiPage({
   searchParams: Promise<{ page?: string }>;
 }) {
   const { page } = await searchParams;
-  const { posts, pages, page: cur } = await listPosts(Number(page) || 1);
+  const { posts, pages, page: cur, unavailable } = await listPosts(Number(page) || 1);
 
   return (
     <>
@@ -129,7 +129,13 @@ export default async function NovostiPage({
         </header>
 
         <div className="mx-auto w-full max-w-wrap px-[22px] pb-16">
-          {posts.length === 0 ? (
+          {/* An unreachable feed and an empty feed are different things: telling a
+              reader "скоро появятся материалы" during an outage hides it. */}
+          {unavailable ? (
+            <p className="mx-auto mt-2 max-w-[880px] text-center text-[15px] font-medium text-ink-3">
+              Лента временно недоступна. Обновите страницу через минуту.
+            </p>
+          ) : posts.length === 0 ? (
             <p className="mx-auto mt-2 max-w-[880px] text-center text-[15px] font-medium text-ink-3">
               Скоро здесь появятся материалы.
             </p>

@@ -1,4 +1,11 @@
 /**
+ * DEPRECATED — superseded by the admin panel.
+ *
+ * Editorial content now lives in the admin database and reaches this site through
+ * its public API; the `Post` table this script writes to is no longer what the
+ * feed reads. Publish, unpublish and pin in the admin panel instead. Kept only so
+ * an existing deployment's history stays inspectable.
+ *
  * Post management CLI (no admin UI yet).
  *
  *   npx tsx scripts/manage-post.ts <command> <slug>
